@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ytdown-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend-domain.pages.dev
+    autoDeploy: true 
