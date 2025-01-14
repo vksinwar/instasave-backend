@@ -1,26 +1,21 @@
 # app.py
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 import yt_dlp
-import aiofiles
 import asyncio
-import io
 from datetime import datetime, timedelta
 import humanize
-from typing import Optional, Callable, TypeVar, ParamSpec, Dict
-from fastapi.requests import Request
+from typing import Dict, Optional, Callable, TypeVar, ParamSpec
 from functools import wraps
 import time
 import httpx
 import os
 
 # Initialize FastAPI
-app = FastAPI()
+app = FastAPI(title="Video Downloader API")
 
 # Get allowed origins from environment variable or use default
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
@@ -35,28 +30,7 @@ app.add_middleware(
 )
 
 # Optimize Gzip compression
-app.add_middleware(GZipMiddleware, minimum_size=500)  # Compress responses >= 500 bytes
-
-# Mount static files with caching
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
-templates = Jinja2Templates(directory="templates")
-
-# Add caching headers middleware
-@app.middleware("http")
-async def add_cache_headers(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    
-    # Add caching for static files
-    if request.url.path.startswith("/static"):
-        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        response.headers["Vary"] = "Accept-Encoding"
-    
-    # Add Server-Timing header
-    process_time = time.time() - start_time
-    response.headers["Server-Timing"] = f"total;dur={process_time*1000:.2f}"
-    
-    return response
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Simple in-memory cache with size limit
 MAX_CACHE_ITEMS = 100
